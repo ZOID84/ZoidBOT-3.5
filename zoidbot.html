@@ -19,38 +19,70 @@
             height: 300px;
             overflow-y: auto;
             text-align: left;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .user-message {
+            color: blue;
+        }
+        .assistant-message {
+            color: green;
         }
         textarea {
             width: 100%;
             height: 80px;
             margin-top: 10px;
+            resize: none;
+            padding: 5px;
         }
         button {
             padding: 10px 20px;
             cursor: pointer;
             margin-top: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #status {
+            font-style: italic;
+            color: gray;
         }
     </style>
 </head>
 <body>
     <h2>Chat con Claude 3.5 Sonnet</h2>
     <div id="chat"></div>
+    <p id="status"></p>
     <textarea id="userInput" placeholder="Scrivi il tuo messaggio..."></textarea><br>
     <button onclick="sendMessage()">Invia</button>
 
     <script>
         let conversation = [];
+        const userInput = document.getElementById("userInput");
+        const chatDiv = document.getElementById("chat");
+        const statusDiv = document.getElementById("status");
+
+        userInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
 
         async function sendMessage() {
-            const input = document.getElementById("userInput").value;
-            const chatDiv = document.getElementById("chat");
-            if (!input.trim()) return;
+            const input = userInput.value.trim();
+            if (!input) return;
 
             // Aggiungi il messaggio dell'utente alla chat
             conversation.push({ role: "user", content: input });
-            chatDiv.innerHTML += `<p><strong>Tu:</strong> ${input}</p>`;
-            document.getElementById("userInput").value = "";
+            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong> ${input}</p>`;
+            userInput.value = "";
             chatDiv.scrollTop = chatDiv.scrollHeight;
+            statusDiv.textContent = "Claude sta scrivendo...";
 
             try {
                 const response = await puter.ai.chat(conversation, { model: 'claude-3-5-sonnet' });
@@ -58,10 +90,12 @@
                 
                 // Aggiungi la risposta di Claude alla chat
                 conversation.push({ role: "assistant", content: reply });
-                chatDiv.innerHTML += `<p><strong>Claude:</strong> ${reply}</p>`;
+                chatDiv.innerHTML += `<p class='assistant-message'><strong>Claude:</strong> ${reply}</p>`;
                 chatDiv.scrollTop = chatDiv.scrollHeight;
             } catch (error) {
-                chatDiv.innerHTML += `<p><strong>Errore:</strong> ${error.message}</p>`;
+                chatDiv.innerHTML += `<p class='assistant-message'><strong>Errore:</strong> ${error.message}</p>`;
+            } finally {
+                statusDiv.textContent = "";
             }
         }
     </script>
