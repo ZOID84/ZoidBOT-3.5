@@ -21,6 +21,7 @@
             text-align: left;
             background: #f9f9f9;
             border-radius: 5px;
+            white-space: pre-wrap;
         }
         .user-message {
             color: blue;
@@ -34,6 +35,7 @@
             margin-top: 10px;
             resize: none;
             padding: 5px;
+            white-space: pre-wrap;
         }
         button {
             padding: 10px 20px;
@@ -79,7 +81,7 @@
 
             // Aggiungi il messaggio dell'utente alla chat
             conversation.push({ role: "user", content: input });
-            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong> ${input}</p>`;
+            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong> <br>${input.replace(/\n/g, "<br>")}</p>`;
             userInput.value = "";
             chatDiv.scrollTop = chatDiv.scrollHeight;
             statusDiv.textContent = "Claude sta scrivendo...";
@@ -90,7 +92,7 @@
                 
                 // Aggiungi la risposta di Claude alla chat
                 conversation.push({ role: "assistant", content: reply });
-                chatDiv.innerHTML += `<p class='assistant-message'><strong>Claude:</strong> ${reply}</p>`;
+                chatDiv.innerHTML += `<p class='assistant-message'><strong>Claude:</strong> <br>${reply.replace(/\n/g, "<br>")}</p>`;
                 chatDiv.scrollTop = chatDiv.scrollHeight;
             } catch (error) {
                 chatDiv.innerHTML += `<p class='assistant-message'><strong>Errore:</strong> ${error.message}</p>`;
