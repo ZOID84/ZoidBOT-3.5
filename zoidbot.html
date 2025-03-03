@@ -13,41 +13,55 @@
             padding: 20px;
             text-align: center;
         }
+        #chat {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            text-align: left;
+        }
         textarea {
             width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
+            height: 80px;
+            margin-top: 10px;
         }
         button {
             padding: 10px 20px;
             cursor: pointer;
-        }
-        #response {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            min-height: 50px;
-            text-align: left;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <h2>Chat con Claude 3.5 Sonnet</h2>
+    <div id="chat"></div>
     <textarea id="userInput" placeholder="Scrivi il tuo messaggio..."></textarea><br>
     <button onclick="sendMessage()">Invia</button>
-    <div id="response"></div>
 
     <script>
+        let conversation = [];
+
         async function sendMessage() {
             const input = document.getElementById("userInput").value;
-            const responseDiv = document.getElementById("response");
-            responseDiv.innerHTML = "<em>Sto pensando...</em>";
+            const chatDiv = document.getElementById("chat");
+            if (!input.trim()) return;
+
+            // Aggiungi il messaggio dell'utente alla chat
+            conversation.push({ role: "user", content: input });
+            chatDiv.innerHTML += `<p><strong>Tu:</strong> ${input}</p>`;
+            document.getElementById("userInput").value = "";
+            chatDiv.scrollTop = chatDiv.scrollHeight;
 
             try {
-                const response = await puter.ai.chat(input, {model: 'claude-3-5-sonnet'});
-                responseDiv.innerHTML = response.message.content[0].text;
+                const response = await puter.ai.chat(conversation, { model: 'claude-3-5-sonnet' });
+                const reply = response.message.content[0].text;
+                
+                // Aggiungi la risposta di Claude alla chat
+                conversation.push({ role: "assistant", content: reply });
+                chatDiv.innerHTML += `<p><strong>Claude:</strong> ${reply}</p>`;
+                chatDiv.scrollTop = chatDiv.scrollHeight;
             } catch (error) {
-                responseDiv.innerHTML = "Errore: " + error.message;
+                chatDiv.innerHTML += `<p><strong>Errore:</strong> ${error.message}</p>`;
             }
         }
     </script>
