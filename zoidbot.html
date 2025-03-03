@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat con Zoid 3.5 Soffort (v8)</title>
+    <title>Chat con Zoid 3.5 Soffort</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         body {
@@ -78,7 +78,7 @@
 </head>
 <body>
     <div id="sidebar">
-        <h2>Chat con Claude</h2>
+        <h2>Chat con Zoid</h2>
         <button onclick="newChat()">Nuova Chat</button>
         <select id="chatHistory" onchange="loadChat()">
             <option value="">Seleziona una chat</option>
@@ -92,6 +92,7 @@
 
     <script>
         let conversation = [];
+        let currentChat = "";
         const userInput = document.getElementById("userInput");
         const chatDiv = document.getElementById("chat");
         const chatHistorySelect = document.getElementById("chatHistory");
@@ -103,9 +104,11 @@
             }
         });
 
-        function saveChat(chatName) {
-            localStorage.setItem(chatName, JSON.stringify(conversation));
-            loadChatHistory();
+        function saveChat() {
+            if (currentChat) {
+                localStorage.setItem(currentChat, JSON.stringify(conversation));
+                loadChatHistory();
+            }
         }
 
         function loadChatHistory() {
@@ -120,25 +123,29 @@
         }
 
         function loadChat() {
-            const selectedChat = chatHistorySelect.value;
-            if (selectedChat) {
-                conversation = JSON.parse(localStorage.getItem(selectedChat)) || [];
+            currentChat = chatHistorySelect.value;
+            if (currentChat) {
+                conversation = JSON.parse(localStorage.getItem(currentChat)) || [];
                 chatDiv.innerHTML = "";
                 conversation.forEach(msg => {
-                    chatDiv.innerHTML += `<p class='${msg.role}-message'><strong>${msg.role === "user" ? "Tu" : "Claude"}:</strong><br>${msg.content.replace(/\n/g, "<br>")}</p>`;
+                    chatDiv.innerHTML += `<p class='${msg.role}-message'><strong>${msg.role === "user" ? "Tu" : "Zoid"}:</strong><br>${msg.content.replace(/\n/g, "<br>")}</p>`;
                 });
             }
         }
 
         function newChat() {
-            if (conversation.length > 0) {
-                const chatName = prompt("Inserisci un nome per la nuova chat:", `Chat ${new Date().toLocaleString()}`);
-                if (chatName) {
-                    saveChat(chatName);
+            const chatName = prompt("Inserisci un nome per la nuova chat:", `Chat ${new Date().toLocaleString()}`);
+            if (chatName) {
+                if (conversation.length > 0 && currentChat) {
+                    saveChat();
                 }
+                conversation = [];
+                currentChat = chatName;
+                localStorage.setItem(currentChat, JSON.stringify(conversation));
+                loadChatHistory();
+                chatHistorySelect.value = currentChat;
+                chatDiv.innerHTML = "";
             }
-            conversation = [];
-            chatDiv.innerHTML = "";
         }
 
         async function sendMessage() {
@@ -155,8 +162,9 @@
                 const reply = response.message.content[0].text;
                 
                 conversation.push({ role: "assistant", content: reply });
-                chatDiv.innerHTML += `<p class='assistant-message'><strong>Claude:</strong><br>${reply.replace(/\n/g, "<br>")}</p>`;
+                chatDiv.innerHTML += `<p class='assistant-message'><strong>Zoid:</strong><br>${reply.replace(/\n/g, "<br>")}</p>`;
                 chatDiv.scrollTop = chatDiv.scrollHeight;
+                saveChat();
             } catch (error) {
                 chatDiv.innerHTML += `<p class='assistant-message'><strong>Errore:</strong> ${error.message}</p>`;
             }
