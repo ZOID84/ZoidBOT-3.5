@@ -83,8 +83,7 @@
             }
         });
 
-        function saveChat() {
-            const chatName = `Chat ${new Date().toLocaleString()}`;
+        function saveChat(chatName) {
             localStorage.setItem(chatName, JSON.stringify(conversation));
             loadChatHistory();
         }
@@ -113,7 +112,10 @@
 
         function newChat() {
             if (conversation.length > 0) {
-                saveChat();
+                const chatName = prompt("Inserisci un nome per la nuova chat:", `Chat ${new Date().toLocaleString()}`);
+                if (chatName) {
+                    saveChat(chatName);
+                }
             }
             conversation = [];
             chatDiv.innerHTML = "";
