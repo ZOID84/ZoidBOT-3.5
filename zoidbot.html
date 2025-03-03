@@ -3,26 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat con Claude 3.5 Sonnet</title>
+    <title>Chat con Zoid 3.5 Soffort (v8)</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
+        }
+        #sidebar {
+            width: 250px;
+            background: #222;
+            color: white;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar h2 {
             text-align: center;
         }
-        #chat {
-            border: 1px solid #ccc;
+        #chatHistory {
+            width: 100%;
+            background: #333;
+            color: white;
+            border: none;
             padding: 10px;
-            height: 300px;
+            margin-bottom: 10px;
+        }
+        #chatContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        #chat {
+            flex: 1;
             overflow-y: auto;
-            text-align: left;
-            background: #f9f9f9;
+            background: white;
+            padding: 15px;
             border-radius: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .user-message {
             color: blue;
@@ -35,45 +58,42 @@
         textarea {
             width: 100%;
             height: 80px;
-            margin-top: 10px;
             resize: none;
-            padding: 5px;
-            white-space: pre-wrap;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         button {
-            padding: 10px 20px;
-            cursor: pointer;
-            margin-top: 10px;
+            padding: 10px;
             background-color: #007bff;
             color: white;
             border: none;
+            cursor: pointer;
             border-radius: 5px;
         }
         button:hover {
             background-color: #0056b3;
         }
-        #status {
-            font-style: italic;
-            color: gray;
-        }
     </style>
 </head>
 <body>
-    <h2>Chat con Claude 3.5 Sonnet</h2>
-    <button onclick="newChat()">Nuova Chat</button>
-    <select id="chatHistory" onchange="loadChat()">
-        <option value="">Seleziona una chat salvata</option>
-    </select>
-    <div id="chat"></div>
-    <p id="status"></p>
-    <textarea id="userInput" placeholder="Scrivi il tuo messaggio..."></textarea><br>
-    <button onclick="sendMessage()">Invia</button>
+    <div id="sidebar">
+        <h2>Chat con Claude</h2>
+        <button onclick="newChat()">Nuova Chat</button>
+        <select id="chatHistory" onchange="loadChat()">
+            <option value="">Seleziona una chat</option>
+        </select>
+    </div>
+    <div id="chatContainer">
+        <div id="chat"></div>
+        <textarea id="userInput" placeholder="Scrivi il tuo messaggio..."></textarea>
+        <button onclick="sendMessage()">Invia</button>
+    </div>
 
     <script>
         let conversation = [];
         const userInput = document.getElementById("userInput");
         const chatDiv = document.getElementById("chat");
-        const statusDiv = document.getElementById("status");
         const chatHistorySelect = document.getElementById("chatHistory");
 
         userInput.addEventListener("keypress", function(event) {
@@ -89,7 +109,7 @@
         }
 
         function loadChatHistory() {
-            chatHistorySelect.innerHTML = '<option value="">Seleziona una chat salvata</option>';
+            chatHistorySelect.innerHTML = '<option value="">Seleziona una chat</option>';
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 const option = document.createElement("option");
@@ -129,7 +149,6 @@
             chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong><br>${input.replace(/\n/g, "<br>")}</p>`;
             userInput.value = "";
             chatDiv.scrollTop = chatDiv.scrollHeight;
-            statusDiv.textContent = "Claude sta scrivendo...";
 
             try {
                 const response = await puter.ai.chat(conversation, { model: 'claude-3-5-sonnet' });
@@ -140,8 +159,6 @@
                 chatDiv.scrollTop = chatDiv.scrollHeight;
             } catch (error) {
                 chatDiv.innerHTML += `<p class='assistant-message'><strong>Errore:</strong> ${error.message}</p>`;
-            } finally {
-                statusDiv.textContent = "";
             }
         }
 
