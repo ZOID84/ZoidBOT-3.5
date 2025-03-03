@@ -70,6 +70,7 @@
             border: none;
             cursor: pointer;
             border-radius: 5px;
+            margin-top: 5px;
         }
         button:hover {
             background-color: #0056b3;
@@ -83,6 +84,9 @@
         <select id="chatHistory" onchange="loadChat()">
             <option value="">Seleziona una chat</option>
         </select>
+        <button onclick="deleteChat()">Elimina Chat</button>
+        <button onclick="deleteAllChats()">Elimina Tutte</button>
+        <button onclick="exportChat()">Esporta Chat</button>
     </div>
     <div id="chatContainer">
         <div id="chat"></div>
@@ -145,6 +149,38 @@
                 loadChatHistory();
                 chatHistorySelect.value = currentChat;
                 chatDiv.innerHTML = "";
+            }
+        }
+
+        function deleteChat() {
+            if (currentChat) {
+                localStorage.removeItem(currentChat);
+                loadChatHistory();
+                chatDiv.innerHTML = "";
+                conversation = [];
+                currentChat = "";
+            }
+        }
+
+        function deleteAllChats() {
+            if (confirm("Sei sicuro di voler eliminare tutte le chat?")) {
+                localStorage.clear();
+                loadChatHistory();
+                chatDiv.innerHTML = "";
+                conversation = [];
+                currentChat = "";
+            }
+        }
+
+        function exportChat() {
+            if (currentChat) {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(conversation, null, 2));
+                const downloadAnchor = document.createElement("a");
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `${currentChat}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
             }
         }
 
