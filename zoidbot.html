@@ -109,20 +109,23 @@
         });
 
         function saveChat() {
-            if (currentChat) {
-                localStorage.setItem(currentChat, JSON.stringify(conversation));
-                loadChatHistory();
+            if (!currentChat) {
+                currentChat = `Chat ${new Date().toLocaleString()}`;
             }
+            localStorage.setItem(currentChat, JSON.stringify(conversation));
+            loadChatHistory();
         }
 
         function loadChatHistory() {
             chatHistorySelect.innerHTML = '<option value="">Seleziona una chat</option>';
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = key;
-                chatHistorySelect.appendChild(option);
+                if (!key.startsWith("puter.") && key !== "isWhitelist") {
+                    const option = document.createElement("option");
+                    option.value = key;
+                    option.textContent = key;
+                    chatHistorySelect.appendChild(option);
+                }
             }
         }
 
@@ -138,71 +141,53 @@
         }
 
         function newChat() {
-            const chatName = prompt("Inserisci un nome per la nuova chat:", `Chat ${new Date().toLocaleString()}`);
-            if (chatName) {
-                if (conversation.length > 0 && currentChat) {
-                    saveChat();
-                }
-                conversation = [];
-                currentChat = chatName;
-                localStorage.setItem(currentChat, JSON.stringify(conversation));
-                loadChatHistory();
-                chatHistorySelect.value = currentChat;
-                chatDiv.innerHTML = "";
+            currentChat = `Chat ${new Date().toLocaleString()}`;
+            conversation = [];
+            chatDiv.innerHTML = "";
+            saveChat();
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            userInput.value = "";
+
+            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong><br>${message.replace(/\n/g, "<br>")}</p>`;
+            conversation.push({ role: "user", content: message });
+            saveChat();
+
+            let assistantMessage = "";
+            const responseElement = document.createElement("p");
+            responseElement.classList.add("assistant-message");
+            chatDiv.appendChild(responseElement);
+            
+            const response = await puter.ai.chat(message, { model: 'claude-3-5-sonnet', stream: true });
+            for await (const part of response) {
+                assistantMessage += part?.text || "";
+                responseElement.innerHTML = `<strong>Zoid:</strong><br>${assistantMessage.replace(/\n/g, "<br>")}`;
             }
+            
+            conversation.push({ role: "assistant", content: assistantMessage });
+            saveChat();
         }
 
         function deleteChat() {
-            if (currentChat) {
+            if (currentChat && confirm("Sei sicuro di voler eliminare questa chat?")) {
                 localStorage.removeItem(currentChat);
-                loadChatHistory();
-                chatDiv.innerHTML = "";
-                conversation = [];
                 currentChat = "";
+                conversation = [];
+                chatDiv.innerHTML = "";
+                loadChatHistory();
             }
         }
 
         function deleteAllChats() {
             if (confirm("Sei sicuro di voler eliminare tutte le chat?")) {
                 localStorage.clear();
-                loadChatHistory();
-                chatDiv.innerHTML = "";
-                conversation = [];
                 currentChat = "";
-            }
-        }
-
-        function exportChat() {
-            if (currentChat) {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(conversation, null, 2));
-                const downloadAnchor = document.createElement("a");
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", `${currentChat}.json`);
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                document.body.removeChild(downloadAnchor);
-            }
-        }
-
-        async function sendMessage() {
-            const input = userInput.value.trim();
-            if (!input) return;
-
-            conversation.push({ role: "user", content: input });
-            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong><br>${input.replace(/\n/g, "<br>")}</p>`;
-            userInput.value = "";
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-
-            try {
-                const response = await puter.ai.chat(conversation, { model: 'claude-3-5-sonnet' });
-                const reply = response.message.content[0].text;
-                
-                conversation.push({ role: "assistant", content: reply });
-                chatDiv.innerHTML += `<p class='assistant-message'><strong>Zoid:</strong><br>${reply.replace(/\n/g, "<br>")}</p>`;
-                chatDiv.scrollTop = chatDiv.scrollHeight;
-                saveChat();
-            } catch (error) {
-                chatDiv.innerHTML += `<p class='assistant-message'><strong>Errore:</strong> ${error.message}</p>`;
+                conversation = [];
+                chatDiv.innerHTML = "";
+                loadChatHistory();
             }
         }
 
