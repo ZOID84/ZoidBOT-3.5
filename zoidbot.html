@@ -60,6 +60,10 @@
 </head>
 <body>
     <h2>Chat con Claude 3.5 Sonnet</h2>
+    <button onclick="newChat()">Nuova Chat</button>
+    <select id="chatHistory" onchange="loadChat()">
+        <option value="">Seleziona una chat salvata</option>
+    </select>
     <div id="chat"></div>
     <p id="status"></p>
     <textarea id="userInput" placeholder="Scrivi il tuo messaggio..."></textarea><br>
@@ -70,6 +74,7 @@
         const userInput = document.getElementById("userInput");
         const chatDiv = document.getElementById("chat");
         const statusDiv = document.getElementById("status");
+        const chatHistorySelect = document.getElementById("chatHistory");
 
         userInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -78,11 +83,46 @@
             }
         });
 
+        function saveChat() {
+            const chatName = `Chat ${new Date().toLocaleString()}`;
+            localStorage.setItem(chatName, JSON.stringify(conversation));
+            loadChatHistory();
+        }
+
+        function loadChatHistory() {
+            chatHistorySelect.innerHTML = '<option value="">Seleziona una chat salvata</option>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const option = document.createElement("option");
+                option.value = key;
+                option.textContent = key;
+                chatHistorySelect.appendChild(option);
+            }
+        }
+
+        function loadChat() {
+            const selectedChat = chatHistorySelect.value;
+            if (selectedChat) {
+                conversation = JSON.parse(localStorage.getItem(selectedChat)) || [];
+                chatDiv.innerHTML = "";
+                conversation.forEach(msg => {
+                    chatDiv.innerHTML += `<p class='${msg.role}-message'><strong>${msg.role === "user" ? "Tu" : "Claude"}:</strong><br>${msg.content.replace(/\n/g, "<br>")}</p>`;
+                });
+            }
+        }
+
+        function newChat() {
+            if (conversation.length > 0) {
+                saveChat();
+            }
+            conversation = [];
+            chatDiv.innerHTML = "";
+        }
+
         async function sendMessage() {
             const input = userInput.value.trim();
             if (!input) return;
 
-            // Aggiungi il messaggio dell'utente alla chat
             conversation.push({ role: "user", content: input });
             chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong><br>${input.replace(/\n/g, "<br>")}</p>`;
             userInput.value = "";
@@ -93,7 +133,6 @@
                 const response = await puter.ai.chat(conversation, { model: 'claude-3-5-sonnet' });
                 const reply = response.message.content[0].text;
                 
-                // Aggiungi la risposta di Claude alla chat
                 conversation.push({ role: "assistant", content: reply });
                 chatDiv.innerHTML += `<p class='assistant-message'><strong>Claude:</strong><br>${reply.replace(/\n/g, "<br>")}</p>`;
                 chatDiv.scrollTop = chatDiv.scrollHeight;
@@ -103,6 +142,8 @@
                 statusDiv.textContent = "";
             }
         }
+
+        loadChatHistory();
     </script>
 </body>
 </html>
