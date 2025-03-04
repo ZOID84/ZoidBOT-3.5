@@ -110,7 +110,7 @@
 
         function saveChat() {
             if (!currentChat) {
-                currentChat = `Chat ${new Date().toLocaleString()}`;
+                currentChat = new Date().toLocaleString();
             }
             localStorage.setItem(currentChat, JSON.stringify(conversation));
             loadChatHistory();
@@ -119,7 +119,7 @@
         function loadChatHistory() {
             chatHistorySelect.innerHTML = '<option value="">Seleziona una chat</option>';
             for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
+                let key = localStorage.key(i);
                 if (!key.startsWith("puter.") && key !== "isWhitelist") {
                     const option = document.createElement("option");
                     option.value = key;
@@ -141,52 +141,42 @@
         }
 
         function newChat() {
-            currentChat = `Chat ${new Date().toLocaleString()}`;
+            let chatName = prompt("Inserisci il nome della nuova chat:");
+            if (!chatName) return;
+            currentChat = chatName;
             conversation = [];
             chatDiv.innerHTML = "";
             saveChat();
+            loadChatHistory();
+            chatHistorySelect.value = currentChat;
         }
 
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (!message) return;
-            userInput.value = "";
-
-            chatDiv.innerHTML += `<p class='user-message'><strong>Tu:</strong><br>${message.replace(/\n/g, "<br>")}</p>`;
-            conversation.push({ role: "user", content: message });
-            saveChat();
-
-            let assistantMessage = "";
-            const responseElement = document.createElement("p");
-            responseElement.classList.add("assistant-message");
-            chatDiv.appendChild(responseElement);
-            
-            const response = await puter.ai.chat(message, { model: 'claude-3-5-sonnet', stream: true });
-            for await (const part of response) {
-                assistantMessage += part?.text || "";
-                responseElement.innerHTML = `<strong>Zoid:</strong><br>${assistantMessage.replace(/\n/g, "<br>")}`;
-            }
-            
-            conversation.push({ role: "assistant", content: assistantMessage });
-            saveChat();
+        function exportChat() {
+            if (!currentChat) return;
+            const chatContent = conversation.map(msg => `${msg.role === "user" ? "Tu" : "Zoid"}:\n${msg.content}`).join("\n\n");
+            const blob = new Blob([chatContent], { type: "text/plain" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `${currentChat}.txt`;
+            a.click();
         }
 
         function deleteChat() {
-            if (currentChat && confirm("Sei sicuro di voler eliminare questa chat?")) {
-                localStorage.removeItem(currentChat);
-                currentChat = "";
-                conversation = [];
-                chatDiv.innerHTML = "";
-                loadChatHistory();
+            if (currentChat) {
+                if (confirm(`Sei sicuro di voler eliminare la chat: ${currentChat}?`)) {
+                    localStorage.removeItem(currentChat);
+                    chatDiv.innerHTML = "";
+                    conversation = [];
+                    loadChatHistory();
+                }
             }
         }
 
         function deleteAllChats() {
             if (confirm("Sei sicuro di voler eliminare tutte le chat?")) {
                 localStorage.clear();
-                currentChat = "";
-                conversation = [];
                 chatDiv.innerHTML = "";
+                conversation = [];
                 loadChatHistory();
             }
         }
